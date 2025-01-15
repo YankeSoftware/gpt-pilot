@@ -70,6 +70,7 @@ class LLMProvider(str, Enum):
     GROQ = "groq"
     LM_STUDIO = "lm-studio"
     AZURE = "azure"
+    DEEPSEEK = "deepseek"
 
 
 class UIAdapter(str, Enum):
@@ -318,6 +319,13 @@ class Config(_StrictModel):
         default={
             LLMProvider.OPENAI: ProviderConfig(),
             LLMProvider.ANTHROPIC: ProviderConfig(),
+            LLMProvider.DEEPSEEK: ProviderConfig(
+                base_url="https://api.deepseek.com/v1",
+                extra={
+                    "max_tokens": 8192,
+                    "top_p": 0.95,
+                }
+            ),
         }
     )
     agent: dict[str, AgentLLMConfig] = Field(
