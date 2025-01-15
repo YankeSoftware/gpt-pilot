@@ -1,7 +1,6 @@
 """DeepSeek client for gpt-pilot"""
 
 import json
-import logging
 import datetime
 from typing import Optional, Dict, Any, List, Tuple
 
@@ -21,12 +20,6 @@ from core.log import get_logger
 
 logger = get_logger(__name__)
 
-DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
-DEFAULT_TIMEOUT = 30
-MAX_RETRIES = 3
-INITIAL_RETRY_DELAY = 1
-MAX_RETRY_DELAY = 10
-
 class DeepSeekClient(BaseLLMClient):
     """Client implementation for DeepSeek's LLM API"""
     
@@ -34,16 +27,14 @@ class DeepSeekClient(BaseLLMClient):
 
     def _init_client(self):
         """Initialize the DeepSeek client with proper configuration."""
+        base_url = self.config.base_url or "https://api.deepseek.com/v1/chat/completions"
+        
         self.client = httpx.AsyncClient(
-            base_url=self.config.base_url or DEEPSEEK_API_URL,
-            timeout=httpx.Timeout(
-                connect=self.config.connect_timeout,
-                read=self.config.read_timeout
-            ),
+            base_url=base_url,
+            timeout=60.0,
             headers={
                 "Authorization": f"Bearer {self.config.api_key}",
                 "Content-Type": "application/json",
-                "Accept": "application/json",
             },
         )
         logger.info(f"Initialized DeepSeek client with model: {self.config.model}")
@@ -53,7 +44,7 @@ class DeepSeekClient(BaseLLMClient):
         messages = []
         system_content = None
 
-        # Extract system message if present
+        # Extract system messages
         for msg in convo.messages:
             if msg.role == "system":
                 if system_content:
@@ -62,13 +53,13 @@ class DeepSeekClient(BaseLLMClient):
                     system_content = msg.content
                 continue
 
-            # Handle function messages as user messages
+            # Convert function calls to user messages
             role = "user" if msg.role == "function" else msg.role
             
             # For first user message, prepend system content if any
             if role == "user" and system_content and not messages:
                 content = f"{system_content}\n\nHuman: {msg.content}"
-                system_content = None  # Only use system once
+                system_content = None
             else:
                 content = msg.content
 
@@ -82,9 +73,9 @@ class DeepSeekClient(BaseLLMClient):
 
     @retry(
         retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
-        stop=stop_after_attempt(MAX_RETRIES),
-        wait=wait_exponential(multiplier=INITIAL_RETRY_DELAY, max=MAX_RETRY_DELAY),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, max=10),
+        before=before_sleep_log(logger, log_level=15),
     )
     async def _make_request(
         self,
@@ -93,15 +84,20 @@ class DeepSeekClient(BaseLLMClient):
         json_mode: bool = False,
     ) -> Tuple[str, int, int]:
         """
-        Make a request to the DeepSeek API with automatic retries.
+        Make a request to the DeepSeek API with retries.
 
         Args:
-            convo: The conversation to send
+            convo: Conversation history
             temperature: Optional temperature override
             json_mode: Whether to request JSON output
 
         Returns:
             Tuple of (response_text, prompt_tokens, completion_tokens)
+
+        Raises:
+            httpx.RequestError: For network/connection errors
+            httpx.HTTPStatusError: For API errors (400-500)
+            ValueError: For invalid responses
         """
         messages = await self._convert_messages(convo)
         
@@ -109,32 +105,26 @@ class DeepSeekClient(BaseLLMClient):
             "model": self.config.model,
             "messages": messages,
             "temperature": temperature or self.config.temperature,
-            "max_tokens": self.config.extra.get("max_tokens", 8192),
-            "top_p": self.config.extra.get("top_p", 0.95),
-            "response_format": {"type": "json_object"} if json_mode else None,
+            "max_tokens": self.config.extra.get("max_tokens", 8192) if self.config.extra else 8192,
+            "top_p": self.config.extra.get("top_p", 0.95) if self.config.extra else 0.95,
         }
         
-        # Remove None values
-        request_data = {k: v for k, v in request_data.items() if v is not None}
+        if json_mode:
+            request_data["response_format"] = {"type": "json_object"}
 
         try:
-            response = await self.client.post(
-                "",  # Base URL already set in client
-                json=request_data
-            )
+            logger.debug(f"Sending request to DeepSeek API: {json.dumps(request_data)}")
+            response = await self.client.post("", json=request_data)
             response.raise_for_status()
             data = response.json()
 
             # Validate response format
-            if not isinstance(data, dict) or "choices" not in data:
-                raise ValueError("Invalid response format: missing 'choices'")
-            
-            if not data["choices"] or not isinstance(data["choices"][0], dict):
-                raise ValueError("Invalid response format: empty or invalid choices")
+            if "choices" not in data or not data["choices"]:
+                raise ValueError("Invalid response: missing or empty choices")
             
             choice = data["choices"][0]
             if "message" not in choice or "content" not in choice["message"]:
-                raise ValueError("Invalid response format: missing message content")
+                raise ValueError("Invalid response: missing message content")
 
             # Get tokens used
             usage = data.get("usage", {})
@@ -143,10 +133,11 @@ class DeepSeekClient(BaseLLMClient):
 
             response_text = choice["message"]["content"]
 
-            # Stream response chunks if handler provided
+            # Stream response if handler provided
             if self.stream_handler:
                 await self.stream_handler(response_text)
 
+            logger.debug(f"Got response ({completion_tokens} tokens): {response_text[:100]}...")
             return response_text, prompt_tokens, completion_tokens
 
         except httpx.HTTPStatusError as e:
@@ -157,11 +148,11 @@ class DeepSeekClient(BaseLLMClient):
                 error_body = {"raw": e.response.text}
                 
             error_msg = error_body.get("error", {}).get("message", str(e))
-            logger.error(f"DeepSeek API error: {error_msg}")
-            raise  # Let tenacity handle retry
+            logger.error(f"DeepSeek API error: {error_msg}", exc_info=True)
+            raise
 
         except Exception as e:
-            logger.error(f"Unexpected error calling DeepSeek API: {e}")
+            logger.error(f"Unexpected error calling DeepSeek API: {e}", exc_info=True)
             raise
 
     def rate_limit_sleep(self, err: Exception) -> Optional[datetime.timedelta]:
@@ -169,28 +160,30 @@ class DeepSeekClient(BaseLLMClient):
         Calculate retry delay from rate limit headers.
         
         Args:
-            err: The rate limit exception
-            
+            err: The exception that triggered the retry
+
         Returns:
             Optional time to wait before retry
         """
         try:
             if not hasattr(err, "response"):
                 return None
-                
-            headers = err.response.headers
-            reset_time = headers.get("x-ratelimit-reset")
-            
-            if reset_time:
-                # Convert reset timestamp to delay
-                reset_timestamp = int(reset_time)
-                now = datetime.datetime.now().timestamp()
-                delay_seconds = max(1, reset_timestamp - now)
-                return datetime.timedelta(seconds=delay_seconds)
-            
-            # Default retry delay if no header
-            return datetime.timedelta(seconds=INITIAL_RETRY_DELAY)
-            
+
+            # Check for rate limit error
+            if err.response.status_code == 429:
+                # Try to get retry delay from headers
+                reset_time = err.response.headers.get("x-ratelimit-reset")
+                if reset_time:
+                    reset_timestamp = int(reset_time)
+                    now = datetime.datetime.now().timestamp()
+                    delay_seconds = max(1, reset_timestamp - now)
+                    return datetime.timedelta(seconds=delay_seconds)
+
+                # Default 5 second retry if no header
+                return datetime.timedelta(seconds=5)
+
+            return None
+
         except Exception as e:
             logger.warning(f"Error parsing rate limit headers: {e}")
             return None
