@@ -5,17 +5,10 @@ import datetime
 from typing import Optional, Dict, Any, List, Tuple
 
 import httpx
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
-)
-
 from core.config import LLMProvider
 from core.llm.base import BaseLLMClient
 from core.llm.convo import Convo
+from core.llm.request_log import LLMRequestLog, LLMRequestStatus
 from core.log import get_logger
 
 logger = get_logger(__name__)
@@ -39,44 +32,6 @@ class DeepSeekClient(BaseLLMClient):
         )
         logger.info(f"Initialized DeepSeek client with model: {self.config.model}")
 
-    async def _convert_messages(self, convo: Convo) -> List[Dict[str, str]]:
-        """Convert conversation messages to DeepSeek format."""
-        messages = []
-        system_content = None
-
-        # Extract system messages
-        for msg in convo.messages:
-            if msg.role == "system":
-                if system_content:
-                    system_content += f"\n\n{msg.content}"
-                else:
-                    system_content = msg.content
-                continue
-
-            # Convert function calls to user messages
-            role = "user" if msg.role == "function" else msg.role
-            
-            # For first user message, prepend system content if any
-            if role == "user" and system_content and not messages:
-                content = f"{system_content}\n\nHuman: {msg.content}"
-                system_content = None
-            else:
-                content = msg.content
-
-            # Merge consecutive messages of same role
-            if messages and messages[-1]["role"] == role:
-                messages[-1]["content"] += f"\n\n{content}"
-            else:
-                messages.append({"role": role, "content": content})
-
-        return messages
-
-    @retry(
-        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, max=10),
-        before=before_sleep_log(logger, log_level=15),
-    )
     async def _make_request(
         self,
         convo: Convo,
@@ -93,14 +48,35 @@ class DeepSeekClient(BaseLLMClient):
 
         Returns:
             Tuple of (response_text, prompt_tokens, completion_tokens)
-
-        Raises:
-            httpx.RequestError: For network/connection errors
-            httpx.HTTPStatusError: For API errors (400-500)
-            ValueError: For invalid responses
         """
-        messages = await self._convert_messages(convo)
-        
+        messages = []
+        system_content = None
+
+        # Extract system message if present
+        for msg in convo.messages:
+            if msg.role == "system":
+                if system_content:
+                    system_content += f"\n\n{msg.content}"
+                else:
+                    system_content = msg.content
+                continue
+
+            # Handle function calls to user messages
+            role = "user" if msg.role == "function" else msg.role
+            
+            # For first user message, prepend system content if any
+            if role == "user" and system_content and not messages:
+                content = f"{system_content}\n\nHuman: {msg.content}"
+                system_content = None
+            else:
+                content = msg.content
+
+            # Merge consecutive messages of same role
+            if messages and messages[-1]["role"] == role:
+                messages[-1]["content"] += f"\n\n{content}"
+            else:
+                messages.append({"role": role, "content": content})
+
         request_data = {
             "model": self.config.model,
             "messages": messages,
@@ -113,25 +89,16 @@ class DeepSeekClient(BaseLLMClient):
             request_data["response_format"] = {"type": "json_object"}
 
         try:
-            logger.debug(f"Sending request to DeepSeek API: {json.dumps(request_data)}")
             response = await self.client.post("", json=request_data)
             response.raise_for_status()
             data = response.json()
-
-            # Validate response format
-            if "choices" not in data or not data["choices"]:
-                raise ValueError("Invalid response: missing or empty choices")
-            
-            choice = data["choices"][0]
-            if "message" not in choice or "content" not in choice["message"]:
-                raise ValueError("Invalid response: missing message content")
 
             # Get tokens used
             usage = data.get("usage", {})
             prompt_tokens = usage.get("prompt_tokens", 0)
             completion_tokens = usage.get("completion_tokens", 0)
 
-            response_text = choice["message"]["content"]
+            response_text = data["choices"][0]["message"]["content"]
 
             # Stream response if handler provided
             if self.stream_handler:

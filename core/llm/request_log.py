@@ -2,19 +2,13 @@
 
 from enum import Enum
 from typing import List, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from core.config import LLMProvider
 
 class LLMRequestStatus(str, Enum):
     """Status of an LLM request."""
     SUCCESS = "success"
     ERROR = "error"
-
-@dataclass
-class LLMMessage:
-    """A message in a conversation with an LLM."""
-    role: str
-    content: str
 
 @dataclass
 class LLMRequestLog:
@@ -25,10 +19,10 @@ class LLMRequestLog:
     prompt_tokens: int = 0
     completion_tokens: int = 0
     duration: float = 0.0
-    messages: List[LLMMessage] = None
+    status: LLMRequestStatus = LLMRequestStatus.SUCCESS
     response: Optional[str] = None
     error: Optional[str] = None
-    status: LLMRequestStatus = LLMRequestStatus.SUCCESS
+    prompts: List[str] = field(default_factory=list)
 
     def log_it(self) -> dict:
         """Convert to a format suitable for logging."""
