@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
-
 import os.path
 import sys
+
+# Add the project root to Python path
+project_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, project_root)
 
 try:
     from core.cli.main import run_pythagora

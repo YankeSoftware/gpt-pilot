@@ -3,6 +3,7 @@
 import asyncio
 import datetime
 import json
+from enum import Enum
 from time import time
 from typing import Any, Callable, Optional, Tuple
 
@@ -14,6 +15,20 @@ from core.llm.request_log import LLMRequestLog, LLMRequestStatus
 from core.log import get_logger
 
 logger = get_logger(__name__)
+
+__all__ = ['BaseLLMClient', 'APIError', 'LLMError']
+
+class LLMError(str, Enum):
+    """LLM error types."""
+    KEY_EXPIRED = "key_expired"
+    RATE_LIMITED = "rate_limited"
+    GENERIC_API_ERROR = "generic_api_error"
+
+class APIError(Exception):
+    """API error."""
+    def __init__(self, message: str):
+        self.message = message
+
 
 class BaseLLMClient:
     """Base asynchronous streaming client for language models."""
@@ -90,11 +105,11 @@ class BaseLLMClient:
             if remaining_retries == 0:
                 error_msg = request_log.error or "Maximum retries exceeded"
                 if self.error_handler:
-                    should_retry = await self.error_handler("error", message=error_msg)
+                    should_retry = await self.error_handler(LLMError.GENERIC_API_ERROR, message=error_msg)
                     if should_retry:
                         remaining_retries = max_retries
                         continue
-                raise Exception(error_msg)
+                raise APIError(error_msg)
 
             remaining_retries -= 1
             request_log.status = LLMRequestStatus.SUCCESS
@@ -120,7 +135,7 @@ class BaseLLMClient:
                     if wait_time:
                         message = f"Rate limited. Sleeping for {wait_time.seconds}s..."
                         if self.error_handler:
-                            await self.error_handler("rate_limit", message=message)
+                            await self.error_handler(LLMError.RATE_LIMITED, message=message)
                         await asyncio.sleep(wait_time.seconds)
                         continue
                 raise
@@ -134,7 +149,42 @@ class BaseLLMClient:
         request_log.duration = t1 - t0
 
         return response, request_log
+        
+    async def api_check(self) -> bool:
+        """
+        Perform an LLM API check.
+        
+        Returns:
+            True if the check was successful, False otherwise.
+        """
+        convo = Convo()
+        msg = "This is a connection test. If you can see this, please respond only with 'START' and nothing else."
+        convo.user(msg)
+        resp, _log = await self(convo)
+        return bool(resp)
 
     def rate_limit_sleep(self, err: Exception) -> Optional[datetime.timedelta]:
         """Calculate retry delay from rate limit headers."""
         raise NotImplementedError()
+        
+    @staticmethod
+    def for_provider(provider: LLMProvider) -> type["BaseLLMClient"]:
+        """Return LLM client for the specified provider."""
+        from .anthropic_client import AnthropicClient
+        from .azure_client import AzureClient
+        from .deepseek_client import DeepSeekClient
+        from .groq_client import GroqClient
+        from .openai_client import OpenAIClient
+
+        if provider == LLMProvider.OPENAI:
+            return OpenAIClient
+        elif provider == LLMProvider.ANTHROPIC:
+            return AnthropicClient
+        elif provider == LLMProvider.GROQ:
+            return GroqClient
+        elif provider == LLMProvider.AZURE:
+            return AzureClient
+        elif provider == LLMProvider.DEEPSEEK:
+            return DeepSeekClient
+        else:
+            raise ValueError(f"Unsupported LLM provider: {provider.value}")

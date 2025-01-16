@@ -1,0 +1,23 @@
+# Base dependencies
+wheel>=0.42.0
+setuptools>=69.0.3
+
+# Core requirements with fixed versions
+pydantic==2.10.5
+openai==1.40.6
+anthropic==0.25.9
+groq==0.6.0
+python-dotenv==1.0.1
+
+# Database and async support
+sqlalchemy[asyncio]==2.0.32
+aiosqlite==0.20.0
+
+# Utilities
+colorama==0.4.6
+tiktoken==0.6.0
+regex>=2024.1.1
+
+# Request handling
+requests==2.32.3
+httpx>=0.27.0

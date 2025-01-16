@@ -1,0 +1,45 @@
+# Stage 1: Build base with Python 3.11
+FROM python:3.11-slim-bullseye as builder
+
+# Install build essentials
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install base packages
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools
+
+# Copy requirements
+WORKDIR /app
+COPY requirements-core.txt requirements.txt ./
+
+# Install dependencies in specific order
+RUN pip install --no-cache-dir pydantic==2.10.5 && \
+    pip install --no-cache-dir tiktoken==0.6.0 --no-deps && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.11-slim-bullseye as runtime
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set working directory
+WORKDIR /app
+
+# Copy application
+COPY . .
+
+# Set Python path
+ENV PYTHONPATH=/app:${PYTHONPATH}
+ENV PYTHONUNBUFFERED=1
+
+# Default command
+CMD ["python", "test_imports.py"]
