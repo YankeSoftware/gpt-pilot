@@ -9,17 +9,15 @@ RUN apt-get update && \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies first
-COPY requirements.txt requirements-dev.txt ./
+# Copy requirements first for better caching
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install the package in editable mode
-COPY setup.py .
-COPY core core/
-RUN pip install -e .
-
-# Copy remaining project files
+# Copy the rest of the application
 COPY . .
+
+# Install the package
+RUN pip install -e .
 
 # Set environment variables
 ENV PYTHONPATH=/app
@@ -33,8 +31,5 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-# Test the installation
-RUN python -c "import core.config; print('Core config imported successfully')"
-
-# Run the server
-CMD ["python", "main.py"]
+# Run the application in CLI mode
+CMD ["python", "main.py", "--cli"]

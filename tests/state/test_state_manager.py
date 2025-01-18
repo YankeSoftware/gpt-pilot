@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from core.config import FileSystemConfig
+from core.config import FSConfig
 from core.state.state_manager import StateManager
 
 
@@ -164,7 +164,7 @@ async def test_save_file(mock_get_config, testmanager):
 @pytest.mark.asyncio
 @patch("core.state.state_manager.get_config")
 async def test_importing_changed_files_to_db(mock_get_config, tmpdir, testmanager):
-    mock_get_config.return_value.fs = FileSystemConfig(workspace_root=str(tmpdir))
+    mock_get_config.return_value.fs = FSConfig(workspace_root=str(tmpdir))
     sm = StateManager(testmanager)
     project = await sm.create_project("test")
 
@@ -196,7 +196,7 @@ async def test_importing_changed_files_to_db(mock_get_config, tmpdir, testmanage
 @pytest.mark.asyncio
 @patch("core.state.state_manager.get_config")
 async def test_restoring_files_from_db(mock_get_config, tmpdir, testmanager):
-    mock_get_config.return_value.fs = FileSystemConfig(workspace_root=str(tmpdir))
+    mock_get_config.return_value.fs = FSConfig(workspace_root=str(tmpdir))
     sm = StateManager(testmanager)
     project = await sm.create_project("test1")
 

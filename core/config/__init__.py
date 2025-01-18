@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from core.config.adapter import UIAdapter
 from core.config.ipc import LocalIPCConfig
-from core.config.ui import UIConfig
+from core.config.ui import UIConfig, PlainConfig
 from core.config.virtual import VirtualConfig
 from core.config.magic_words import *
 
@@ -47,6 +47,7 @@ class FileSystemType(str, Enum):
     """
     LOCAL = "local"
     VIRTUAL = "virtual"
+    MEMORY = "memory"
 
 
 class LogConfig(BaseModel):
@@ -81,39 +82,20 @@ class LLMProvider(str, Enum):
 
 
 class LLMConfig(BaseModel):
-    """
-    Complete configuration for an LLM.
-    """
-    provider: LLMProvider = LLMProvider.DEEPSEEK
-    model: str = Field(description="Model to use")
-    base_url: Optional[str] = Field(
-        None,
-        description="Base URL for the provider's API (if different from the provider default)",
-    )
-    api_key: Optional[str] = Field(
-        None,
-        description="API key to use for authentication",
-    )
-    temperature: float = Field(
-        default=0.7,
-        description="Temperature to use for sampling",
-        ge=0.0,
-        le=1.0,
-    )
-    connect_timeout: float = Field(
-        default=60.0,
-        description="Timeout (in seconds) for connecting to the provider's API",
-        ge=0.0,
-    )
-    read_timeout: float = Field(
-        default=20.0,
-        description="Timeout (in seconds) for receiving data",
-        ge=0.0,
-    )
-    extra: Optional[dict[str, Any]] = Field(
-        None,
-        description="Extra provider-specific configuration",
-    )
+    """Configuration for an LLM provider."""
+    provider: LLMProvider = Field(default=LLMProvider.OPENAI, description="LLM provider to use")
+    model: str = Field(default="gpt-4", description="Model name to use")
+    base_url: Optional[str] = Field(None, description="Base URL for API requests")
+    api_key: Optional[str] = Field(None, description="API key for authentication")
+    temperature: float = Field(default=0.7, description="Temperature for sampling")
+    connect_timeout: float = Field(default=60.0, description="Timeout for establishing connection")
+    read_timeout: float = Field(default=20.0, description="Timeout for reading response")
+    extra: Optional[dict] = Field(None, description="Extra provider-specific configuration")
+
+    @property
+    def endpoint(self) -> Optional[str]:
+        """Get the API endpoint URL."""
+        return self.base_url
 
 
 class ProviderConfig(BaseModel):
@@ -174,6 +156,14 @@ class AgentConfig(BaseModel):
     temperature: float = Field(0.7, description="Temperature to use for sampling")
 
 
+class PromptConfig(BaseModel):
+    """Prompt configuration."""
+    paths: list[str] = Field(
+        default=["core/prompts"],
+        description="List of paths to search for prompt templates"
+    )
+
+
 class Config(BaseModel):
     """Main configuration."""
     llm: dict[LLMProvider, ProviderConfig] = Field(
@@ -197,8 +187,9 @@ class Config(BaseModel):
     )
     log: LogConfig = Field(default_factory=LogConfig)
     db: DBConfig = Field(default_factory=DBConfig)
-    ui: UIConfig = Field(description="UI configuration")
+    ui: UIConfig = Field(default_factory=lambda: PlainConfig(), description="UI configuration")
     fs: FSConfig = Field(default_factory=FSConfig)
+    prompt: PromptConfig = Field(default_factory=PromptConfig, description="Prompt configuration")
 
     def all_llms(self) -> list[LLMConfig]:
         """Get all configured LLMs."""

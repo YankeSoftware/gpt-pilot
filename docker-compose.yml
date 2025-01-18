@@ -10,15 +10,11 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"
+    stdin_open: true
+    tty: true
     networks:
       - gpt-pilot-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
     restart: unless-stopped
     command: python main.py
 

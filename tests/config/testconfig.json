@@ -10,17 +10,18 @@
         }
     },
     "agent": {
-        // The default LLM config
         "default": {
             "provider": "openai",
             "model": "gpt-4-turbo",
             "temperature": 0.1
         },
-        // Agent-specific LLM config
-        "CodeMonkey": {
+        "codemonkey": {
             "provider": "anthropic",
             "model": "claude-3-opus",
             "temperature": 0.5
         }
+    },
+    "ui": {
+        "type": "plain"
     }
 }

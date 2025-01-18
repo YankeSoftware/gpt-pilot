@@ -3,41 +3,56 @@
 import logging
 from core.config import LogConfig
 
-def setup(config: LogConfig) -> None:
-    """Configure logging with the given settings."""
+def setup(config: LogConfig, force: bool = False) -> None:
+    """Set up logging configuration.
+    
+    Args:
+        config: Logging configuration
+        force: Whether to force reconfiguration by removing existing handlers
+    """
     root_logger = logging.getLogger()
     
-    # Remove any existing handlers
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
-    
-    # Add new handler with configured format
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(config.format)
-    handler.setFormatter(formatter)
-    root_logger.addHandler(handler)
+    # Remove existing handlers if forced
+    if force:
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
     
     # Set log level
-    root_logger.setLevel(config.level)
+    level = getattr(logging, config.level)
+    root_logger.setLevel(level)
     
-    # If output file is specified, add file handler
+    # Add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_handler.setFormatter(logging.Formatter(config.format))
+    root_logger.addHandler(console_handler)
+    
+    # Add file handler if output file specified
     if config.output:
         file_handler = logging.FileHandler(config.output)
-        file_handler.setFormatter(formatter)
+        file_handler.setLevel(level)
+        file_handler.setFormatter(logging.Formatter(config.format))
         root_logger.addHandler(file_handler)
 
 def get_logger(name: str) -> logging.Logger:
-    """Get a logger configured with the current settings."""
+    """Get a logger with the given name.
+    
+    Args:
+        name: Logger name
+        
+    Returns:
+        Logger instance
+    """
     logger = logging.getLogger(name)
     
-    # Only add handler if not already configured
+    # If logger has no handlers, inherit from root logger
     if not logger.handlers:
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
+        root_logger = logging.getLogger()
+        # Inherit level from root logger if not set
+        if not logger.level:
+            logger.setLevel(root_logger.level)
+        # Add handlers from root logger
+        for handler in root_logger.handlers:
+            logger.addHandler(handler)
     
     return logger

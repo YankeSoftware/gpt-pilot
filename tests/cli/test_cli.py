@@ -24,6 +24,7 @@ def write_test_config(tmp_path):
     cfg = {
         "fs": {"workspace_root": str(tmp_path)},
         "db": {"url": f"sqlite+aiosqlite:///{tmp_path.as_posix()}/test.db"},
+        "ui": {"type": "plain"}
     }
     config_file = tmp_path / "config.json"
     config_file.write_text(json.dumps(cfg), encoding="utf-8")

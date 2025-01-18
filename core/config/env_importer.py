@@ -42,7 +42,7 @@ def import_from_dotenv(new_config_path: str) -> bool:
 
 
 def convert_config(values: dict) -> Config:
-    config = Config()
+    config = Config(ui={"type": "plain"})
 
     for provider in LLMProvider:
         endpoint = values.get(f"{provider.value.upper()}_ENDPOINT")

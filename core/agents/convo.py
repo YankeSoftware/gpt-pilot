@@ -22,6 +22,7 @@ class AgentConvo(Convo):
 
     def __init__(self, agent: "BaseAgent"):
         self.agent_instance = agent
+        self.prompt_log = []  # Initialize prompt_log as empty list
 
         super().__init__()
         try:
