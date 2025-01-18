@@ -10,11 +10,18 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    networks:
+      - gpt-pilot-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 30s
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 3
       start_period: 5s
     restart: unless-stopped
+    command: python main.py
+
+networks:
+  gpt-pilot-network:
+    driver: bridge
