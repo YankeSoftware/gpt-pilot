@@ -23,6 +23,10 @@ class LogConfig(BaseModel):
         description="Output file for logs (if None, logs are printed to stderr)",
     )
 
+class FileSystemType(str, Enum):
+    """Type of filesystem to use."""
+    LOCAL = "local"
+
 class LLMProvider(str, Enum):
     """
     Supported LLM providers.
@@ -86,8 +90,20 @@ class UIConfig(BaseModel):
     """UI configuration"""
     type: str = Field("plain", description="UI type")
 
+class AgentConfig(BaseModel):
+    """Agent configuration."""
+    provider: LLMProvider = Field(default=LLMProvider.DEEPSEEK, description="Default LLM provider")
+    model: str = Field(default="deepseek-chat", description="Default model name")
+    temperature: float = Field(default=0.0, description="Default temperature")
+
 class Config(BaseModel):
     """Main configuration."""
+    agent: dict[str, AgentConfig] = Field(
+        default={
+            "default": AgentConfig()
+        },
+        description="Agent configurations"
+    )
     llm: dict[LLMProvider, ProviderConfig] = Field(
         default={
             LLMProvider.OPENAI: ProviderConfig(),
