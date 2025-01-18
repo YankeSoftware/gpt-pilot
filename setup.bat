@@ -1,34 +1,42 @@
 @echo off
-echo Setting up GPT-Pilot environment...
+setlocal enabledelayedexpansion
 
-REM Remove existing venv if it exists
-if exist venv (
-    echo Removing existing virtual environment...
-    rmdir /s /q venv
+:: Check for Python 3.11
+python --version 2>nul | findstr "3.11" >nul
+if errorlevel 1 (
+    echo Error: Python 3.11 is required
+    exit /b 1
 )
 
-REM Create fresh virtual environment
-echo Creating new virtual environment...
-python -m venv venv
+:: Create virtual environment if it doesn't exist
+if not exist "venv" (
+    echo Creating virtual environment...
+    python -m venv venv
+)
 
-REM Activate virtual environment
-echo Activating virtual environment...
+:: Activate virtual environment
 call venv\Scripts\activate.bat
 
-REM Upgrade pip
+:: Upgrade pip
 python -m pip install --upgrade pip
 
-REM Install core dependencies
-echo Installing core dependencies...
-pip install -r requirements-minimal-test.txt
+:: Install dependencies
+echo Installing dependencies...
+pip install -e .[dev]
 
-REM Set PYTHONPATH
-echo Setting PYTHONPATH...
+:: Set PYTHONPATH
 set PYTHONPATH=%CD%;%PYTHONPATH%
 
-echo Setup complete! Running test_imports.py...
-python test_imports.py
+:: Create .env file if it doesn't exist
+if not exist ".env" (
+    echo Creating .env file...
+    echo OPENAI_API_KEY=your_key_here> .env
+    echo ANTHROPIC_API_KEY=your_key_here>> .env
+    echo GROQ_API_KEY=your_key_here>> .env
+    echo Please update .env with your API keys
+)
 
-echo.
-echo If all tests passed, your environment is ready.
-echo If you need the full development environment, run: pip install -r requirements.txt
+echo Setup complete! Don't forget to:
+echo 1. Update your API keys in .env
+echo 2. Run 'venv\Scripts\activate.bat' to activate the virtual environment
+echo 3. Use 'docker compose up' to run with Docker
