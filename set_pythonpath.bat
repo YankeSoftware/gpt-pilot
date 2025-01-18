@@ -1,3 +1,0 @@
-@echo off
-set PYTHONPATH=%PYTHONPATH%;%~dp0
-echo PYTHONPATH set to: %PYTHONPATH%
