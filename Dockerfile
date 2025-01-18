@@ -41,5 +41,5 @@ USER appuser
 # Test the installation
 RUN python -c "import core.config; print('Core config imported successfully')"
 
-# Run the server
-CMD ttyd -p 7681 bash & python main.py
+# Run the terminal with bash
+CMD ["ttyd", "-p", "7681", "bash"]
