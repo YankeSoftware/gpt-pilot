@@ -11,6 +11,7 @@ services:
       - PYTHONUNBUFFERED=1
     ports:
       - "127.0.0.1:8000:8000"
+      - "127.0.0.1:7681:7681"
     networks:
       - gpt-pilot-network
     healthcheck:
@@ -20,7 +21,6 @@ services:
       retries: 3
       start_period: 5s
     restart: unless-stopped
-    command: python main.py
 
 networks:
   gpt-pilot-network:
