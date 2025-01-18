@@ -12,3 +12,4 @@ class IPCClientConfig(BaseModel):
     port: int = Field(1234, description="IPC server port")
 
 UIConfig = PlainConfig | IPCClientConfig
+

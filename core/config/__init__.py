@@ -6,7 +6,9 @@ from pydantic import BaseModel, Field
 
 from core.config.adapter import UIAdapter
 from core.config.ipc import LocalIPCConfig
+
 from core.config.ui import UIConfig, PlainConfig
+
 from core.config.virtual import VirtualConfig
 from core.config.magic_words import *
 
@@ -48,6 +50,7 @@ class FileSystemType(str, Enum):
     LOCAL = "local"
     VIRTUAL = "virtual"
     MEMORY = "memory"
+
 
 
 class LogConfig(BaseModel):
@@ -96,6 +99,7 @@ class LLMConfig(BaseModel):
     def endpoint(self) -> Optional[str]:
         """Get the API endpoint URL."""
         return self.base_url
+
 
 
 class ProviderConfig(BaseModel):
@@ -155,14 +159,12 @@ class AgentConfig(BaseModel):
     model: str = Field("gpt-4", description="Model to use")
     temperature: float = Field(0.7, description="Temperature to use for sampling")
 
-
 class PromptConfig(BaseModel):
     """Prompt configuration."""
     paths: list[str] = Field(
         default=["core/prompts"],
         description="List of paths to search for prompt templates"
     )
-
 
 class Config(BaseModel):
     """Main configuration."""
@@ -190,6 +192,7 @@ class Config(BaseModel):
     ui: UIConfig = Field(default_factory=lambda: PlainConfig(), description="UI configuration")
     fs: FSConfig = Field(default_factory=FSConfig)
     prompt: PromptConfig = Field(default_factory=PromptConfig, description="Prompt configuration")
+
 
     def all_llms(self) -> list[LLMConfig]:
         """Get all configured LLMs."""

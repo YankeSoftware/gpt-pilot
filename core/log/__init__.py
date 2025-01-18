@@ -32,6 +32,7 @@ def setup(config: LogConfig, force: bool = False) -> None:
         file_handler = logging.FileHandler(config.output)
         file_handler.setLevel(level)
         file_handler.setFormatter(logging.Formatter(config.format))
+
         root_logger.addHandler(file_handler)
 
 def get_logger(name: str) -> logging.Logger:

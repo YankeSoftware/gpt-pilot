@@ -29,6 +29,7 @@ RUN if [ ! -f "config.json" ]; then cp example-config.json config.json; fi
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
+
 USER appuser
 
 # Run the application in CLI mode
