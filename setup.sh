@@ -1,34 +1,43 @@
 #!/bin/bash
-echo "Setting up GPT-Pilot environment..."
+set -e
 
-# Remove existing venv if it exists
-if [ -d "venv" ]; then
-    echo "Removing existing virtual environment..."
-    rm -rf venv
+# Check for Python 3.11
+if ! command -v python3.11 &> /dev/null && ! python3 --version | grep -q "3.11"; then
+    echo "Error: Python 3.11 is required"
+    exit 1
 fi
 
-# Create fresh virtual environment
-echo "Creating new virtual environment..."
-python3 -m venv venv
+# Create virtual environment if it doesn't exist
+if [ ! -d "venv" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv venv
+fi
 
 # Activate virtual environment
-echo "Activating virtual environment..."
 source venv/bin/activate
 
 # Upgrade pip
 python -m pip install --upgrade pip
 
-# Install core dependencies
-echo "Installing core dependencies..."
-pip install -r requirements-minimal-test.txt
+# Install dependencies
+echo "Installing dependencies..."
+pip install -e .[dev]
 
 # Set PYTHONPATH
-echo "Setting PYTHONPATH..."
-export PYTHONPATH=$(pwd):$PYTHONPATH
+export PYTHONPATH=$PWD:$PYTHONPATH
 
-echo "Setup complete! Running test_imports.py..."
-python test_imports.py
+# Create .env file if it doesn't exist
+if [ ! -f ".env" ]; then
+    echo "Creating .env file..."
+    cat > .env << EOL
+OPENAI_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_key_here
+GROQ_API_KEY=your_key_here
+EOL
+    echo "Please update .env with your API keys"
+fi
 
-echo ""
-echo "If all tests passed, your environment is ready."
-echo "If you need the full development environment, run: pip install -r requirements.txt"
+echo "Setup complete! Don't forget to:"
+echo "1. Update your API keys in .env"
+echo "2. Run 'source venv/bin/activate' to activate the virtual environment"
+echo "3. Use 'docker compose up' to run with Docker"
