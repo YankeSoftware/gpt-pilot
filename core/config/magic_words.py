@@ -1,27 +1,63 @@
-PROBLEM_IDENTIFIED = "PROBLEM_IDENTIFIED"
-ADD_LOGS = "ADD_LOGS"
-THINKING_LOGS = [
-    "Pythagora is crunching the numbers...",
-    "Pythagora is deep in thought...",
-    "Pythagora is analyzing your request...",
-    "Pythagora is brewing up a solution...",
-    "Pythagora is putting the pieces together...",
-    "Pythagora is working its magic...",
-    "Pythagora is crafting the perfect response...",
-    "Pythagora is decoding your query...",
-    "Pythagora is on the case...",
-    "Pythagora is computing an answer...",
-    "Pythagora is sorting through the data...",
-    "Pythagora is gathering insights...",
-    "Pythagora is making connections...",
-    "Pythagora is tuning the algorithms...",
-    "Pythagora is piecing together the puzzle...",
-    "Pythagora is scanning the possibilities...",
-    "Pythagora is engineering a response...",
-    "Pythagora is building the answer...",
-    "Pythagora is mapping out a solution...",
-    "Pythagora is figuring this out for you...",
-    "Pythagora is thinking hard right now...",
-    "Pythagora is working for you, so relax!",
-    "Pythagora might take some time to figure this out...",
-]
+# Agent Names
+ARCHITECT_AGENT_NAME = "Architect"
+SPEC_WRITER_AGENT_NAME = "SpecWriter"
+CODE_MONKEY_AGENT_NAME = "CodeMonkey"
+CODE_REVIEW_AGENT_NAME = "CodeReview"
+DESCRIBE_FILES_AGENT_NAME = "DescribeFiles"
+GET_RELEVANT_FILES_AGENT_NAME = "GetRelevantFiles"
+REVIEWER_AGENT_NAME = "Reviewer" 
+DEVELOPER_AGENT_NAME = "Developer"
+TECH_LEAD_AGENT_NAME = "TechLead"
+TECH_LEAD_PLANNING = "TechLeadPlanning"
+TECH_WRITER_AGENT_NAME = "TechWriter"
+PARSE_TASK_AGENT_NAME = "ParseTask"
+TASK_BREAKDOWN_AGENT_NAME = "TaskBreakdown"
+PROBLEM_SOLVER_AGENT_NAME = "ProblemSolver"
+BUG_HUNTER_AGENT_NAME = "BugHunter"
+EXTERNAL_DOCS_AGENT_NAME = "ExternalDocs"
+ERROR_HANDLER_AGENT_NAME = "ErrorHandler"
+TROUBLESHOOTER_AGENT_NAME = "Troubleshooter"
+TROUBLESHOOTER_BUG_REPORT = "TroubleshooterBugReport"
+TASK_COMPLETER_AGENT_NAME = "TaskCompleter"
+CHECK_LOGS_AGENT_NAME = "CheckLogs"
+LOG_ANALYZER_AGENT_NAME = "LogAnalyzer"
+DATABASE_AGENT_NAME = "Database"
+SYNTAX_CHECK_AGENT_NAME = "SyntaxCheck"
+TESTING_AGENT_NAME = "Testing"
+DEPLOYMENT_AGENT_NAME = "Deployment"
+MONITORING_AGENT_NAME = "Monitoring"
+SECURITY_AGENT_NAME = "Security"
+PERFORMANCE_AGENT_NAME = "Performance"
+
+# Status and Action Constants
+ADD_LOGS = "add_logs"
+PROBLEM_IDENTIFIED = "problem_identified"
+TASK_COMPLETED = "task_completed"
+BUG_FIXED = "bug_fixed"
+IN_PROGRESS = "in_progress"
+FAILED = "failed"
+SUCCESS = "success"
+
+# Command Constants
+RUN_TESTS = "run_tests"
+DEBUG = "debug"
+CHECK_LOGS = "check_logs"
+ANALYZE_CODE = "analyze_code"
+EXTERNAL_DOCUMENTATION_API = "external_documentation_api"
+TROUBLESHOOTER_GET_RUN_COMMAND = "troubleshooter_get_run_command"
+
+# Message Types
+ERROR = "error"
+WARNING = "warning"
+INFO = "info"
+DEBUG = "debug"
+
+# File Types
+PYTHON = "python"
+JAVASCRIPT = "javascript"
+TYPESCRIPT = "typescript"
+HTML = "html"
+CSS = "css"
+JSON = "json"
+YAML = "yaml"
+MARKDOWN = "markdown"
