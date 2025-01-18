@@ -9,28 +9,27 @@ RUN apt-get update && \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Create non-root user first to avoid long file ownership operations
+RUN useradd -m -u 1000 appuser
+
+# Copy and install requirements first for better caching
+COPY --chown=appuser:appuser requirements.txt requirements-dev.txt* ./
+COPY --chown=appuser:appuser setup.py .
+COPY --chown=appuser:appuser core ./core
+COPY --chown=appuser:appuser main.py .
+COPY --chown=appuser:appuser example-config.json .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application
-COPY . .
-
-# Install the package
-RUN pip install -e .
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Create example config if it doesn't exist
+# Create config if it doesn't exist
 RUN if [ ! -f "config.json" ]; then cp example-config.json config.json; fi
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
 
 USER appuser
 
-# Run the application in CLI mode
-CMD ["python", "main.py", "--cli"]
+# Run the application
+CMD ["python", "main.py"]

@@ -1,22 +1,39 @@
 services:
-  app:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - .:/app
-      - .env:/app/.env
+      - ./core:/app/core
+      - ./main.py:/app/main.py
+      - ./config.json:/app/config.json
+      - ~/gpt-pilot-workspace:/workspace
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      - GPT_PILOT_MODE=server
+      - CORS_ORIGINS=http://localhost:3000
     ports:
       - "8000:8000"
-    stdin_open: true
-    tty: true
     networks:
       - gpt-pilot-network
     restart: unless-stopped
-    command: python main.py
+
+  frontend:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    networks:
+      - gpt-pilot-network
+    command: /bin/sh -c "npm install && npm run dev"
+    depends_on:
+      - api
 
 networks:
   gpt-pilot-network:

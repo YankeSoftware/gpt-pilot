@@ -1,23 +1,45 @@
+# Version control
 .git
-__pycache__
+.gitignore
+
+# Dependencies
+node_modules
+frontend/node_modules
+**/node_modules
+venv
+**/__pycache__
 *.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.env
+
+# Development
+.vscode
+.idea
 *.log
-.pytest_cache/
-.coverage
-htmlcov/
-dist/
-build/
-*.egg-info/
-.tox/
-.idea/
-.vscode/
-docs/
-tests/
+*.sqlite
+*.db
+
+# Build outputs
+frontend/.next
+frontend/out
+frontend/build
+dist
+build
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Documentation
+docs
 *.md
-LICENSE 
+
+# Test coverage
+coverage
+.coverage
+htmlcov
+
+# Temporary files
+*.swp
+*.swo
+.DS_Store
+Thumbs.db 
