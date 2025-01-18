@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, Project } from '@/lib/api/client';
 import { MainLayout } from '@/components/layout/MainLayout';
+import Link from 'next/link';
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -196,13 +197,24 @@ export default function Home() {
                     projects.map((project) => (
                       <tr key={project.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
-                          {project?.name || 'Unnamed Project'}
+                          <Link
+                            href={`/projects/${project.id}`}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            {project?.name || 'Unnamed Project'}
+                          </Link>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {project?.description || 'No description'}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {project?.status || 'Unknown'}
+                          <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
+                            project.status === 'active' ? 'bg-green-100 text-green-700' :
+                            project.status === 'error' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {project?.status || 'Unknown'}
+                          </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {project?.created_at ? new Date(project.created_at).toLocaleDateString() : 'Unknown'}

@@ -40,8 +40,10 @@ export const api = {
   },
 
   // Development endpoints
-  async startDevelopment(projectId: string): Promise<void> {
-    await apiClient.post(`/api/projects/${projectId}/start`);
+  async startDevelopment(projectId: string, requirements: string): Promise<void> {
+    await apiClient.post(`/api/projects/${projectId}/start`, {
+      requirements,
+    });
   },
 
   async pauseDevelopment(projectId: string): Promise<void> {
