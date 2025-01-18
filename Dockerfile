@@ -7,29 +7,23 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
     build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Create non-root user first to avoid long file ownership operations
+# Create non-root user
 RUN useradd -m -u 1000 appuser
 
-# Copy and install requirements first for better caching
-COPY --chown=appuser:appuser requirements.txt requirements-dev.txt* ./
-COPY --chown=appuser:appuser setup.py .
-COPY --chown=appuser:appuser core ./core
-COPY --chown=appuser:appuser main.py .
-COPY --chown=appuser:appuser example-config.json .
+# Copy requirements first to leverage Docker cache
+COPY --chown=appuser:appuser requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt uvicorn[standard] watchfiles
+# Install Python packages
+RUN pip install --no-cache-dir -r requirements.txt uvicorn watchfiles python-socketio[asyncio]
 
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
+# Copy application code
+COPY --chown=appuser:appuser . .
 
-# Create config if it doesn't exist
-RUN if [ ! -f "config.json" ]; then cp example-config.json config.json; fi
-
+# Switch to non-root user
 USER appuser
 
-# Run the application with reload
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run the application
+CMD ["python", "main.py"]

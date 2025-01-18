@@ -198,7 +198,7 @@ export default function Home() {
                       <tr key={project.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
                           <Link
-                            href={`/projects/${project.id}`}
+                            href={`/project/${project.id}`}
                             className="text-indigo-600 hover:text-indigo-900"
                           >
                             {project?.name || 'Unnamed Project'}

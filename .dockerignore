@@ -1,45 +1,46 @@
-# Version control
+# Git
 .git
 .gitignore
 
-# Dependencies
-node_modules
-frontend/node_modules
-**/node_modules
-venv
-**/__pycache__
+# Python
+__pycache__
 *.pyc
-
-# Development
-.vscode
-.idea
-*.log
-*.sqlite
-*.db
-
-# Build outputs
-frontend/.next
-frontend/out
-frontend/build
-dist
-build
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Documentation
-docs
-*.md
-
-# Test coverage
-coverage
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
 .coverage
-htmlcov
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
 
-# Temporary files
+# Virtual Environment
+venv
+.env
+.venv
+ENV
+
+# IDE
+.idea
+.vscode
 *.swp
 *.swo
-.DS_Store
-Thumbs.db 
+
+# Node
+node_modules
+npm-debug.log
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Project specific
+frontend/
+*.md
+!README.md 

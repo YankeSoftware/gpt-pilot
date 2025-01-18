@@ -13,7 +13,7 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  status: 'active' | 'completed' | 'error';
+  status: 'pending' | 'active' | 'completed' | 'error';
   created_at: string;
 }
 
