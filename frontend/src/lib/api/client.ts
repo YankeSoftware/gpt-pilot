@@ -20,18 +20,23 @@ export interface Project {
 export const api = {
   // Project endpoints
   async listProjects(): Promise<Project[]> {
-    const response = await apiClient.get('/api/projects');
-    return response.data.projects || [];
+    try {
+      const response = await apiClient.get('/api/projects');
+      return response.data?.projects ?? [];
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      return [];
+    }
   },
 
   async getProject(id: string): Promise<Project> {
     const response = await apiClient.get(`/api/projects/${id}`);
-    return response.data.project;
+    return response.data;
   },
 
   async createProject(data: { name: string; description: string }): Promise<Project> {
     const response = await apiClient.post('/api/projects', data);
-    return response.data.project;
+    return response.data;
   },
 
   // Development endpoints

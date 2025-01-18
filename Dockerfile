@@ -20,7 +20,7 @@ COPY --chown=appuser:appuser main.py .
 COPY --chown=appuser:appuser example-config.json .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt uvicorn[standard] watchfiles
 
 # Set environment variables
 ENV PYTHONPATH=/app
@@ -31,5 +31,5 @@ RUN if [ ! -f "config.json" ]; then cp example-config.json config.json; fi
 
 USER appuser
 
-# Run the application
-CMD ["python", "main.py"]
+# Run the application with reload
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

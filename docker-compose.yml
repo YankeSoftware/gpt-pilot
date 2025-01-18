@@ -13,6 +13,7 @@ services:
       - PYTHONUNBUFFERED=1
       - GPT_PILOT_MODE=server
       - CORS_ORIGINS=http://localhost:3000
+      - WATCHFILES_FORCE_POLLING=true
     ports:
       - "8000:8000"
     networks:
